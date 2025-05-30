@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Connexion Employé</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+    <h1 class="text-2xl font-bold mb-6 text-center">Connexion Employé</h1>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label for="loginInput" class="block mb-1 font-medium">Login</label>
+        <input id="loginInput" type="text" required
+               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <button type="submit"
+              class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+        Se connecter
+      </button>
+    </form>
+    <p id="message" class="mt-4 text-center text-red-600"></p>
+  </div>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      const login = document.getElementById("loginInput").value.trim();
+      const personnelList = JSON.parse(localStorage.getItem("personnelList")) || [];
+
+      const employe = personnelList.find(p => p.login === login);
+
+      const messageEl = document.getElementById("message");
+
+      if (!employe) {
+        messageEl.style.color = "red";
+        messageEl.textContent = "Login invalide. Veuillez réessayer.";
+      } else {
+        // Stocke l'utilisateur connecté
+        localStorage.setItem("currentUser", JSON.stringify(employe));
+        
+        messageEl.style.color = "green";
+        messageEl.textContent = `Bienvenue, ${employe.nom} (${employe.poste}) !`;
+
+        // Redirection vers la page employé après 1 seconde
+        setTimeout(() => {
+          window.location.href = "personnel.html";
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>

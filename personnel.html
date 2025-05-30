@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pointage - Employé</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-6">
+  <div class="w-full max-w-4xl bg-white p-6 rounded-2xl shadow-lg">
+    <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">Interface Employé - Pointage</h1>
+
+    <div class="flex justify-center gap-4 mb-6">
+      <button id="pointerBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl shadow transition">
+        Pointer ma présence
+      </button>
+      <button id="absenceBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl shadow transition">
+        Justifier une absence
+      </button>
+      <button id="deconnexionBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl shadow transition">
+        Déconnexion
+      </button>
+    </div>
+
+    <div class="overflow-x-auto mt-8">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">Historique de pointage</h2>
+      <table class="min-w-full bg-white rounded-xl shadow border">
+        <thead class="bg-gray-200 text-gray-700">
+          <tr>
+            <th class="px-4 py-2 text-left">Nom</th>
+            <th class="px-4 py-2 text-left">Date</th>
+            <th class="px-4 py-2 text-left">Heure d'arrivée</th>
+            <th class="px-4 py-2 text-left">Statut</th>
+          </tr>
+        </thead>
+        <tbody id="historiqueBody" class="text-gray-800">
+          <!-- Les données vont s’afficher ici -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const pointerBtn = document.getElementById("pointerBtn");
+    const absenceBtn = document.getElementById("absenceBtn");
+    const deconnexionBtn = document.getElementById("deconnexionBtn");
+    const historiqueBody = document.getElementById("historiqueBody");
+
+    const nomEmploye = "Nom Prénom"; // à remplacer dynamiquement si besoin
+
+    function getAujourdHui() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function getHeureActuelle() {
+      const now = new Date();
+      return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function chargerPointages() {
+      return JSON.parse(localStorage.getItem("pointages") || "[]");
+    }
+
+    function sauvegarderPointages(data) {
+      localStorage.setItem("pointages", JSON.stringify(data));
+    }
+
+    function dejaPointe(data, nom, date) {
+      return data.some(p => p.nom === nom && p.date === date);
+    }
+
+    function updateHistorique() {
+      const data = chargerPointages().filter(p => p.nom === nomEmploye);
+      historiqueBody.innerHTML = "";
+
+      data.reverse().forEach(emp => {
+        const row = document.createElement("tr");
+
+        const nomCell = document.createElement("td");
+        nomCell.textContent = emp.nom;
+        row.appendChild(nomCell);
+
+        const dateCell = document.createElement("td");
+        dateCell.textContent = emp.date;
+        row.appendChild(dateCell);
+
+        const heureCell = document.createElement("td");
+        heureCell.textContent = emp.heure || "-";
+        row.appendChild(heureCell);
+
+        const statutCell = document.createElement("td");
+        if (emp.justification) {
+          statutCell.innerHTML = '<span class="text-yellow-600 font-semibold">Absence Justifiée</span>';
+        } else if (!emp.heure) {
+          statutCell.innerHTML = '<span class="text-red-600 font-semibold">Absent</span>';
+        } else {
+          statutCell.innerHTML = '<span class="text-green-600 font-semibold">Présent</span>';
+        }
+        row.appendChild(statutCell);
+
+        historiqueBody.appendChild(row);
+      });
+    }
+
+    pointerBtn.addEventListener("click", () => {
+      const today = getAujourdHui();
+      const heure = getHeureActuelle();
+      const data = chargerPointages();
+
+      if (dejaPointe(data, nomEmploye, today)) {
+        alert("Vous avez déjà pointé aujourd'hui.");
+        return;
+      }
+
+      data.push({
+        nom: nomEmploye,
+        date: today,
+        heure: heure,
+        justification: false
+      });
+
+      sauvegarderPointages(data);
+      alert("Présence enregistrée !");
+      updateHistorique();
+    });
+
+    absenceBtn.addEventListener("click", () => {
+      const today = getAujourdHui();
+      const data = chargerPointages();
+
+      if (dejaPointe(data, nomEmploye, today)) {
+        alert("Un pointage ou une justification existe déjà pour aujourd'hui.");
+        return;
+      }
+
+      data.push({
+        nom: nomEmploye,
+        date: today,
+        heure: null,
+        justification: true
+      });
+
+      sauvegarderPointages(data);
+      alert("Absence justifiée !");
+      updateHistorique();
+    });
+
+    deconnexionBtn.addEventListener("click", () => {
+      // Suppression de la session (adapter si besoin)
+      localStorage.removeItem("user");  // exemple de clé user stockée en localStorage
+      alert("Vous êtes déconnecté.");
+      // Redirection vers page login ou rechargement de la page
+      window.location.href = "connexionemploye.html"; // changer le lien si besoin
+      // ou simplement : window.location.reload();
+    });
+
+    updateHistorique();
+  </script>
+</body>
+</html>

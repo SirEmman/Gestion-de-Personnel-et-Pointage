@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tableau de Bord DRH</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  
+  <nav class="bg-blue-800 text-white p-4 shadow-md">
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Interface DRH</h1>
+      <div class="space-x-4">
+        <a href="presence.html" class="hover:underline">Suivi Présences</a>
+        <a href="retard.html" class="hover:underline">Retards/Absences</a>
+        <a href="rapport.html" class="hover:underline">Rapports</a>
+      </div>
+    </div>
+  </nav>
+
+  <section id="dashboard" class="p-6">
+    <h2 class="text-xl font-bold mb-4">Statistiques générales</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-600">Total Personnel</p>
+        <p class="text-2xl font-semibold text-blue-600" id="total-personnel">0</p>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-600">Présents aujourd’hui</p>
+        <p class="text-2xl font-semibold text-green-600" id="total-presents">0</p>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-600">Retards/Absences</p>
+        <p class="text-2xl font-semibold text-red-600" id="total-retards">0</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="presence" class="p-6 bg-white mt-6 shadow">
+    <h2 class="text-xl font-bold mb-4">Suivi de pointage</h2>
+    <table class="min-w-full border border-gray-200">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border p-2">Nom</th>
+          <th class="border p-2">Heure d’arrivée</th>
+          <th class="border p-2">Statut</th>
+        </tr>
+      </thead>
+      <tbody id="presence-table">
+        <!-- Données dynamiques ici -->
+      </tbody>
+    </table>
+  </section>
+
+  <section id="retards" class="p-6 bg-white mt-6 shadow">
+    <h2 class="text-xl font-bold mb-4">Rapports de retard et absence</h2>
+    <ul class="list-disc pl-6 text-gray-700" id="retards-list">
+      <!-- Données dynamiques ici -->
+    </ul>
+  </section>
+
+  <section id="personnel" class="p-6 bg-white mt-6 shadow">
+    <h2 class="text-xl font-bold mb-4">Gestion du personnel</h2>
+    <button onclick="openForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4">Ajouter Employé</button>
+
+    <table class="min-w-full border border-gray-200">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border p-2">Login (Identifiant)</th>
+          <th class="border p-2">Prenom et Nom</th>
+          <th class="border p-2">Poste</th>
+          <th class="border p-2">Email</th>
+          <th class="border p-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="personnel-tbody">
+        <!-- Employés dynamiques -->
+      </tbody>
+    </table>
+  </section>
+
+  <section id="rapports" class="p-6 bg-white mt-6 shadow mb-10">
+    <h2 class="text-xl font-bold mb-4">Génération de rapports</h2>
+    <div class="space-x-4">
+      <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Exporter Présences</button>
+      <button class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Exporter Retards/Absences</button>
+      <button class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Exporter Liste du personnel</button>
+    </div>
+  </section>
+
+  <!-- MODALE POUR AJOUT EMPLOYE -->
+  <div id="formModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded shadow w-full max-w-md">
+      <h3 class="text-lg font-bold mb-4">Ajouter un Employé</h3>
+      <form id="employeForm">
+        <div class="mb-3">
+          <label class="block text-sm font-medium">Login (identifiant unique)</label>
+          <input id="loginInput" type="text" class="w-full border p-2 rounded" required>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium">Nom</label>
+          <input id="nomInput" type="text" class="w-full border p-2 rounded" required>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium">Poste</label>
+          <input id="posteInput" type="text" class="w-full border p-2 rounded" required>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium">Email</label>
+          <input id="emailInput" type="email" class="w-full border p-2 rounded" required>
+        </div>
+        <div class="flex justify-end mt-4 space-x-2">
+          <button type="button" onclick="closeForm()" class="bg-gray-400 px-4 py-2 rounded">Annuler</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    loadPersonnel();
+    loadPointages();
+    updateStats();
+  });
+
+  // Charger et afficher le personnel
+  function loadPersonnel() {
+    const tbody = document.getElementById("personnel-tbody");
+    tbody.innerHTML = "";
+
+    const storedPersonnel = JSON.parse(localStorage.getItem("personnelList")) || [];
+    document.getElementById("total-personnel").textContent = storedPersonnel.length;
+
+    storedPersonnel.forEach((p, index) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td class="border p-2">${p.login}</td>
+        <td class="border p-2">${p.nom}</td>
+        <td class="border p-2">${p.poste}</td>
+        <td class="border p-2">${p.email}</td>
+        <td class="border p-2 space-x-2">
+          <button onclick="editEmploye(${index})" class="text-blue-600 hover:underline">Modifier</button>
+          <button onclick="deleteEmploye(${index})" class="text-red-600 hover:underline">Supprimer</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  // Charger et afficher les pointages
+  function loadPointages() {
+    const presenceTbody = document.getElementById("presence-table");
+    const retardsList = document.getElementById("retards-list");
+
+    presenceTbody.innerHTML = "";
+    retardsList.innerHTML = "";
+
+    const personnel = JSON.parse(localStorage.getItem("personnelList")) || [];
+    const pointages = JSON.parse(localStorage.getItem("pointages")) || [];
+
+    const today = new Date().toISOString().slice(0, 10); // Format 'YYYY-MM-DD'
+
+    // Pour statistiques
+    let countPresents = 0;
+    let countRetards = 0;
+    let absents = [];
+
+    personnel.forEach(p => {
+      // Chercher pointage du jour
+      const pointageJour = pointages.find(pt => pt.login === p.login && pt.date === today);
+
+      let heureArrivee = "-";
+      let statut = "Absent";
+
+      if (pointageJour) {
+        heureArrivee = pointageJour.heure;
+        statut = "Présent";
+
+        countPresents++;
+
+        // Définir heure limite d'arrivée (ex : 9h00)
+        const limiteArrivee = "09:00";
+
+        if (heureArrivee > limiteArrivee) {
+          statut = "Retard";
+          countRetards++;
+        }
+      } else {
+        // Pas de pointage => absent
+        absents.push(p.nom);
+      }
+
+      // Ajouter ligne au tableau
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="border p-2">${p.nom}</td>
+        <td class="border p-2">${heureArrivee}</td>
+        <td class="border p-2 font-semibold ${statut === "Retard" ? "text-red-600" : statut === "Présent" ? "text-green-600" : "text-gray-600"}">${statut}</td>
+      `;
+      presenceTbody.appendChild(tr);
+    });
+
+    // Liste retards et absents
+    if (countRetards === 0 && absents.length === 0) {
+      const li = document.createElement("li");
+      li.textContent = "Aucun retard ou absence aujourd’hui.";
+      retardsList.appendChild(li);
+    } else {
+      if (countRetards > 0) {
+        const liRetard = document.createElement("li");
+        liRetard.textContent = `Retards aujourd'hui : ${countRetards}`;
+        liRetard.classList.add("font-bold", "text-red-600");
+        retardsList.appendChild(liRetard);
+      }
+      if (absents.length > 0) {
+        const liAbsents = document.createElement("li");
+        liAbsents.textContent = `Absents aujourd’hui : ${absents.join(", ")}`;
+        liAbsents.classList.add("font-bold", "text-red-600");
+        retardsList.appendChild(liAbsents);
+      }
+    }
+
+    // Mettre à jour statistiques générales
+    document.getElementById("total-presents").textContent = countPresents;
+    document.getElementById("total-retards").textContent = countRetards + absents.length;
+  }
+
+  // Mise à jour globale des stats (appelée après modif du personnel ou pointages)
+  function updateStats() {
+    loadPointages();
+  }
+
+  // Ajout, modif, suppression personnel (comme tu avais déjà)
+
+  function openForm() {
+    document.getElementById("formModal").classList.remove("hidden");
+    // Reset form fields
+    document.getElementById("loginInput").value = "";
+    document.getElementById("nomInput").value = "";
+    document.getElementById("posteInput").value = "";
+    document.getElementById("emailInput").value = "";
+    editingIndex = null;
+  }
+
+  function closeForm() {
+    document.getElementById("formModal").classList.add("hidden");
+  }
+
+  let editingIndex = null;
+
+  document.getElementById("employeForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const login = document.getElementById("loginInput").value.trim();
+    const nom = document.getElementById("nomInput").value.trim();
+    const poste = document.getElementById("posteInput").value.trim();
+    const email = document.getElementById("emailInput").value.trim();
+
+    if (!login || !nom || !poste || !email) {
+      alert("Tous les champs sont requis.");
+      return;
+    }
+
+    let personnelList = JSON.parse(localStorage.getItem("personnelList")) || [];
+
+    // Vérifier unicité du login sauf si modification sur même index
+    const exists = personnelList.some((p, i) => p.login === login && i !== editingIndex);
+    if (exists) {
+      alert("Ce login est déjà utilisé, veuillez en choisir un autre.");
+      return;
+    }
+
+    if (editingIndex === null) {
+      // Ajout
+      personnelList.push({ login, nom, poste, email });
+    } else {
+      // Modification
+      personnelList[editingIndex] = { login, nom, poste, email };
+    }
+
+    localStorage.setItem("personnelList", JSON.stringify(personnelList));
+    loadPersonnel();
+    updateStats();
+    closeForm();
+  });
+
+  function editEmploye(index) {
+    const personnelList = JSON.parse(localStorage.getItem("personnelList")) || [];
+    const p = personnelList[index];
+    if (!p) return alert("Employé introuvable.");
+
+    document.getElementById("loginInput").value = p.login;
+    document.getElementById("nomInput").value = p.nom;
+    document.getElementById("posteInput").value = p.poste;
+    document.getElementById("emailInput").value = p.email;
+    editingIndex = index;
+    openForm();
+  }
+
+  function deleteEmploye(index) {
+    if (!confirm("Voulez-vous vraiment supprimer cet employé ?")) return;
+    let personnelList = JSON.parse(localStorage.getItem("personnelList")) || [];
+    personnelList.splice(index, 1);
+    localStorage.setItem("personnelList", JSON.stringify(personnelList));
+    loadPersonnel();
+    updateStats();
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pointage Employé</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col items-center justify-center min-h-screen p-6">
+
+  <h1 class="text-3xl font-bold mb-6">Pointage de Présence</h1>
+
+  <div class="bg-white p-6 rounded shadow w-full max-w-md text-center">
+
+    <p id="status" class="mb-4 text-lg"></p>
+
+    <button id="pointageBtn" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition">
+      Pointer ma présence
+    </button>
+
+    <h2 class="text-xl font-semibold mt-8 mb-3">Historique des pointages</h2>
+    <ul id="historique" class="text-left max-h-48 overflow-auto border border-gray-300 rounded p-4 bg-gray-50">
+      <!-- Les pointages s'afficheront ici -->
+    </ul>
+
+  </div>
+
+  <script>
+    // Récupérer les éléments
+    const btn = document.getElementById('pointageBtn');
+    const status = document.getElementById('status');
+    const historique = document.getElementById('historique');
+
+    // Nom de l'employé (pour l'exemple ici, à modifier selon l'authentification réelle)
+    const nomEmploye = "Jean Dupont";
+
+    // Format date YYYY-MM-DD
+    function getTodayDate() {
+      const d = new Date();
+      return d.toISOString().split('T')[0];
+    }
+
+    // Format heure HH:mm:ss
+    function getCurrentTime() {
+      const d = new Date();
+      return d.toTimeString().split(' ')[0];
+    }
+
+    // Charger les pointages depuis localStorage
+    function loadPointages() {
+      return JSON.parse(localStorage.getItem('pointages')) || [];
+    }
+
+    // Sauvegarder les pointages dans localStorage
+    function savePointages(pointages) {
+      localStorage.setItem('pointages', JSON.stringify(pointages));
+    }
+
+    // Vérifie si l'employé a déjà pointé aujourd'hui
+    function aDejaPointeAujourdHui(nom) {
+      const today = getTodayDate();
+      const pointages = loadPointages();
+      return pointages.some(p => p.nom === nom && p.date === today);
+    }
+
+    // Ajouter un nouveau pointage
+    function ajouterPointage(nom) {
+      const pointages = loadPointages();
+      const newPointage = {
+        nom,
+        date: getTodayDate(),
+        heure: getCurrentTime()
+      };
+      pointages.push(newPointage);
+      savePointages(pointages);
+      return newPointage;
+    }
+
+    // Afficher l'historique des pointages (max 10 derniers)
+    function afficherHistorique(nom) {
+      const pointages = loadPointages()
+        .filter(p => p.nom === nom)
+        .sort((a, b) => new Date(b.date + 'T' + b.heure) - new Date(a.date + 'T' + a.heure))
+        .slice(0, 10);
+
+      historique.innerHTML = '';
+      if(pointages.length === 0) {
+        historique.innerHTML = '<li>Aucun pointage enregistré.</li>';
+        return;
+      }
+
+      pointages.forEach(p => {
+        const li = document.createElement('li');
+        li.textContent = `${p.date} à ${p.heure}`;
+        historique.appendChild(li);
+      });
+    }
+
+    // Met à jour l'état du bouton et le message
+    function majEtatPointage() {
+      if (aDejaPointeAujourdHui(nomEmploye)) {
+        status.textContent = "Vous avez déjà pointé votre présence aujourd'hui.";
+        btn.disabled = true;
+        btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+      } else {
+        status.textContent = "Vous n'avez pas encore pointé aujourd'hui.";
+        btn.disabled = false;
+        btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+      }
+    }
+
+    // Gestion du clic sur le bouton
+    btn.addEventListener('click', () => {
+      if (!aDejaPointeAujourdHui(nomEmploye)) {
+        const pointage = ajouterPointage(nomEmploye);
+        status.textContent = `Présence pointée le ${pointage.date} à ${pointage.heure}.`;
+        majEtatPointage();
+        afficherHistorique(nomEmploye);
+      }
+    });
+
+    // Initialisation à l'ouverture de la page
+    majEtatPointage();
+    afficherHistorique(nomEmploye);
+
+  </script>
+
+</body>
+</html>

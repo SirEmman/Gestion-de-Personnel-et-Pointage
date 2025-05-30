@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Test DRH</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+
+  <button onclick="openForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+    Ajouter Employé
+  </button>
+
+  <!-- FORMULAIRE MASQUÉ -->
+  <div id="formModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded shadow w-full max-w-md">
+      <h3 class="text-lg font-bold mb-4">Ajouter un Employé</h3>
+      <form>
+        <div class="mb-2">
+          <label>Nom</label>
+          <input type="text" class="w-full border p-2 rounded" required />
+        </div>
+        <div class="mb-2">
+          <label>Poste</label>
+          <input type="text" class="w-full border p-2 rounded" required />
+        </div>
+        <div class="mb-2">
+          <label>Email</label>
+          <input type="email" class="w-full border p-2 rounded" required />
+        </div>
+        <div class="flex justify-end mt-4 space-x-2">
+          <button type="button" onclick="closeForm()" class="bg-gray-400 px-4 py-2 rounded">Annuler</button>
+          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openForm() {
+      document.getElementById('formModal').classList.remove('hidden');
+    }
+
+    function closeForm() {
+      document.getElementById('formModal').classList.add('hidden');
+    }
+  </script>
+
+</body>
+</html>
