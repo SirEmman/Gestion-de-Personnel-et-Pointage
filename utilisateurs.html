@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Liste des utilisateurs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://kit.fontawesome.com/a2e0c6cf58.js" crossorigin="anonymous"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-6xl mx-auto bg-white shadow-lg rounded-xl p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-bold">
+        <i class="fas fa-users text-blue-600 mr-2"></i>Liste des utilisateurs
+      </h2>
+      <div class="flex gap-2">
+        <button id="refreshBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+          <i class="fas fa-sync-alt mr-1"></i>Actualiser
+        </button>
+        <a href="auth.html" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+          <i class="fas fa-user-plus mr-1"></i>Nouvel utilisateur
+        </a>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <input type="text" id="searchInput" placeholder="Rechercher..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-left border-collapse">
+        <thead class="bg-gray-100 text-gray-700 text-sm uppercase">
+          <tr>
+            <th class="py-3 px-4 border-b">ID</th>
+            <th class="py-3 px-4 border-b">Nom</th>
+            <th class="py-3 px-4 border-b">Email</th>
+            <th class="py-3 px-4 border-b text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody" class="text-gray-700">
+          <!-- Lignes dynamiques -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex justify-between items-center mt-4">
+      <button id="prevBtn" class="bg-gray-300 px-4 py-2 rounded disabled:opacity-50">Précédent</button>
+      <span id="pageIndicator" class="text-gray-600"></span>
+      <button id="nextBtn" class="bg-gray-300 px-4 py-2 rounded disabled:opacity-50">Suivant</button>
+    </div>
+  </div>
+
+  <script>
+    let allUsers = [];
+    let currentPage = 1;
+    const usersPerPage = 15;
+
+    const tbody = document.getElementById("userTableBody");
+    const searchInput = document.getElementById("searchInput");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const pageIndicator = document.getElementById("pageIndicator");
+
+    function fetchUsers() {
+      fetch("http://localhost:3000/users")
+        .then(res => res.json())
+        .then(data => {
+          allUsers = data;
+          currentPage = 1;
+          updateTable();
+        })
+        .catch(err => {
+          alert("Erreur de chargement des utilisateurs : " + err);
+        });
+    }
+
+    function updateTable() {
+      const query = searchInput.value.toLowerCase();
+      const filtered = allUsers.filter(u =>
+        u.nom?.toLowerCase().includes(query) || u.email?.toLowerCase().includes(query)
+      );
+
+      const totalPages = Math.ceil(filtered.length / usersPerPage);
+      const start = (currentPage - 1) * usersPerPage;
+      const end = start + usersPerPage;
+
+      const pageUsers = filtered.slice(start, end);
+
+      tbody.innerHTML = pageUsers.map(user => `
+        <tr class="hover:bg-gray-50">
+          <td class="py-3 px-4 border-b">${user.id}</td>
+          <td class="py-3 px-4 border-b">${user.nom}</td>
+          <td class="py-3 px-4 border-b">${user.email}</td>
+          <td class="py-3 px-4 border-b text-center">
+            <button onclick="editUser(${user.id})" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-semibold">
+              Modifier
+            </button>
+            <button onclick="deleteUser(${user.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm font-semibold">
+              Supprimer
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      pageIndicator.textContent = `Page ${currentPage} / ${totalPages || 1}`;
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        updateTable();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      const filtered = allUsers.filter(u =>
+        u.nom?.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchInput.value.toLowerCase())
+      );
+      const totalPages = Math.ceil(filtered.length / usersPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        updateTable();
+      }
+    });
+
+    searchInput.addEventListener("input", () => {
+      currentPage = 1;
+      updateTable();
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", fetchUsers);
+
+    function deleteUser(id) {
+      if (confirm("Supprimer cet utilisateur ?")) {
+        fetch(`http://localhost:3000/users/${id}`, {
+          method: "DELETE"
+        })
+        .then(() => fetchUsers())
+        .catch(err => alert("Erreur : " + err));
+      }
+    }
+
+    function editUser(id) {
+      window.location.href = `edit.html?id=${id}`;
+    }
+
+    fetchUsers();
+  </script>
+</body>
+</html>
+
